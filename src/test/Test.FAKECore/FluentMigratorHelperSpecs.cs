@@ -1,198 +1,159 @@
-﻿using System;
+﻿using Fake;
 using Machine.Specifications;
 
 namespace Test.FAKECore
 {
     public class when_parsing_fluent_migrator_args
     {
+        It should_append_assembly = () =>
+        {
+            BuildMigratorArgs().ShouldContain("--assembly=test.dll");                
+        };
+
         It should_append_provider_when_specified = () =>
         {
-            BuildMigratorArgsProvider().ShouldContain("--provider=SqlServer2008");
-            BuildMigratorArgsNoProvider().ShouldNotContain("--provider=SqlServer2008");
+            BuildMigratorArgs(provider: FluentMigratorHelper.Provider.SqlServer2008).ShouldContain("--provider=SqlServer2008");
+            BuildMigratorArgs().ShouldNotContain("--provider=");
         };
           
         It should_append_connection_when_specified = () =>
         {
-            BuildMigratorArgsProvider().ShouldContain("--connection=Testing");
-            BuildMigratorArgsNoProvider().ShouldNotContain("--connection=Testing");
+            BuildMigratorArgs(connection: "Testing").ShouldContain("--connection=Testing");
+            BuildMigratorArgs().ShouldNotContain("--connection=");
         };
             
         It should_append_connection_string_path_when_specified = () =>
         {
-            BuildMigratorArgsProvider().ShouldContain(@"--connectionStringConfigPath=C:\test.config");
-            BuildMigratorArgsNoProvider().ShouldNotContain(@"--connectionStringConfigPath=C:\test.config");
+            BuildMigratorArgs(connectionStringConfigPath: @"C:\test.config")
+                .ShouldContain(@"--connectionStringConfigPath=C:\test.config");
+            
+            BuildMigratorArgs().ShouldNotContain(@"--connectionStringConfigPath=");
         };
              
         It should_append_namespace_when_specified = () =>
         {
-            BuildMigratorArgsProvider().ShouldContain("--namespace=test.namespace");                                      
-            BuildMigratorArgsNoProvider().ShouldNotContain("--namespace=test.namespace");
+            BuildMigratorArgs(@namespace: "test.namespace").ShouldContain("--namespace=test.namespace");                                      
+            BuildMigratorArgs().ShouldNotContain("--namespace=");
         };
             
         It should_append_nested_flag_when_specified = () =>
         {
-            BuildMigratorArgsProvider().ShouldContain("--nested");
-            BuildMigratorArgsNoProvider().ShouldNotContain("--nested");
+            BuildMigratorArgs(nested: true).ShouldContain("--nested");
+            BuildMigratorArgs().ShouldNotContain("--nested");
         };
 
         It should_append_output_flag_when_specified = () =>
         {
-            BuildMigratorArgsProvider().ShouldContain("--output");
-            BuildMigratorArgsNoProvider().ShouldNotContain("--output");                                      
+            BuildMigratorArgs(output: true).ShouldContain("--output");
+            BuildMigratorArgs().ShouldNotContain("--output");                                      
         };
 
         It should_only_append_output_filename_when_output_flag_also_specified = () =>
         {
-            BuildMigratorArgsProvider(true).ShouldContain("--outputFilename=test.sql");
-            BuildMigratorArgsProvider(false).ShouldNotContain("--outputFilename=test.sql");
+            BuildMigratorArgs(output: true, outputFileName: "test.sql").ShouldContain("--outputFilename=test.sql");
+            BuildMigratorArgs(output: false, outputFileName: "test.sql").ShouldNotContain("--outputFilename=");
         };
 
         It should_append_preview_flag_when_specified = () =>
         {
-            BuildMigratorArgsProvider().ShouldContain("--preview");
-            BuildMigratorArgsNoProvider().ShouldNotContain("--preview");
+            BuildMigratorArgs(preview: true).ShouldContain("--preview");
+            BuildMigratorArgs().ShouldNotContain("--preview");
         };
    
         It should_only_append_steps_when_task_is_rollback = () =>
         {
-            BuildMigratorArgsTask("rollback").ShouldContain("--steps=1");
-            BuildMigratorArgsTask("migrate").ShouldNotContain("--steps=1");                              
+            BuildMigratorArgs(task: "rollback").ShouldContain("--steps=1");
+            BuildMigratorArgs().ShouldNotContain("--steps=");                              
         };
 
         It should_only_append_version_when_specified = () =>
         {
-            BuildMigratorArgsVersion(1).ShouldContain("--version=1");
-            BuildMigratorArgsVersion(0).ShouldNotContain("--version=1");                            
+            BuildMigratorArgs(version: 1).ShouldContain("--version=1");
+            BuildMigratorArgs().ShouldNotContain("--version=");                            
         };
 
-        private static string BuildMigratorArgsVersion(int version)
+        It should_only_append_start_version_when_no_connection_flag_also_specified = () =>
         {
-            var args = new Fake.FluentMigratorHelper.FluentMigratorParams
-                (
+            BuildMigratorArgs().ShouldNotContain("--startVersion");
+            BuildMigratorArgs(startVersion: 2).ShouldNotContain("--startVersion=");
+            BuildMigratorArgs(startVersion: 2, noConnection: true).ShouldContain("--startVersion=");
+        };
+
+        It should_only_append_no_connection_flag_when_specified = () =>
+        {
+            BuildMigratorArgs().ShouldNotContain("--noConnection");
+            BuildMigratorArgs(noConnection: true).ShouldContain("--noConnection");                                             
+        };
+
+        It should_only_append_profile_flag_when_specified = () =>
+        {
+            BuildMigratorArgs().ShouldNotContain("--profile=");
+            BuildMigratorArgs(profile: "production").ShouldContain("--profile=production");
+        };
+
+        It should_only_append_timeout_when_timeout_specified_with_non_default_value = () =>
+        {
+            BuildMigratorArgs().ShouldNotContain("--timeout=");
+            BuildMigratorArgs(timeout: 45).ShouldContain("--timeout=45");                                                                      
+        };
+
+        It should_append_multiple_tag_arguments_when_multiple_tags_specified = () =>
+        {
+            BuildMigratorArgs(tags: new[] { "tag1", "tag2" }).ShouldContain("--tag=tag1");
+            BuildMigratorArgs(tags: new[] { "tag1", "tag2" }).ShouldContain("--tag=tag2");
+        };
+
+        It should_append_single_tag_argument_when_single_tag_specified = () =>
+        {
+            BuildMigratorArgs(tags: new [] { "tag3" }).ShouldContain("--tag=tag3");                                                                     
+        };
+
+        It should_not_append_tag_argument_when_no_tags_specified = () =>
+        {
+            BuildMigratorArgs(tags: new string[0]).ShouldNotContain("--tag=");                          
+        };
+
+        private static string BuildMigratorArgs(
+            string assembly = "test.dll",
+            FluentMigratorHelper.Provider provider = FluentMigratorHelper.Provider.None,
+            string connection = null, 
+            string connectionStringConfigPath = null, 
+            string @namespace = null,
+            bool nested = false, 
+            bool output = false, 
+            string outputFileName = null, 
+            bool preview = false, 
+            int steps = 1, 
+            string task = "migrate", 
+            int version = 0, 
+            int startVersion = -1, 
+            bool noConnection = false,
+            string profile = null, 
+            int timeout = 30, 
+            string[] tags = null)
+        {
+            var args = new FluentMigratorHelper.FluentMigratorParams
+            (
                 string.Empty, // Toolpath
-                Fake.FluentMigratorHelper.Provider.SqlServer2008, // Provider
-                "Testing", // Connection
-                @"C:\test.config", // Connection String Config Path
-                "test.namespace", // Namespace
-                true, // Nested
-                true, // Output
-                null, // OutputFileName
-                true, // Preview
-                1, // Steps
-                "migrate", // Task
-                version, // Version
-                -1, // Start Version
-                false, // NoConnection
-                null, // Profile
-                30, // Timeout
-                new String[0] // Tags
+                provider,
+                connection,
+                connectionStringConfigPath,
+                @namespace,
+                nested,
+                output,
+                outputFileName,
+                preview,
+                steps,
+                task,
+                version,
+                startVersion,
+                noConnection,
+                profile,
+                timeout,
+                tags ?? new string[0]
             );
 
-            return Fake.FluentMigratorHelper.buildMigratorArgs(args, "test.dll");
-        }
-
-        private static string BuildMigratorArgsTask(string task)
-        {
-            var args = new Fake.FluentMigratorHelper.FluentMigratorParams
-                (
-                string.Empty, // Toolpath
-                Fake.FluentMigratorHelper.Provider.SqlServer2008, // Provider
-                "Testing", // Connection
-                @"C:\test.config", // Connection String Config Path
-                "test.namespace", // Namespace
-                true, // Nested
-                true, // Output
-                null, // OutputFileName
-                true, // Preview
-                1, // Steps
-                task, // Task
-                0, // Version
-                -1, // Start Version
-                false, // NoConnection
-                null, // Profile
-                30, // Timeout
-                new String[0] // Tags
-            );
-
-            return Fake.FluentMigratorHelper.buildMigratorArgs(args, "test.dll");
-        }
-
-        private static string BuildMigratorArgsProvider()
-        {
-            var args = new Fake.FluentMigratorHelper.FluentMigratorParams
-                (
-                string.Empty, // Toolpath
-                Fake.FluentMigratorHelper.Provider.SqlServer2008, // Provider
-                "Testing", // Connection
-                @"C:\test.config", // Connection String Config Path
-                "test.namespace", // Namespace
-                true, // Nested
-                true, // Output
-                null, // OutputFileName
-                true, // Preview
-                1, // Steps
-                "migrate", // Task
-                0, // Version
-                -1, // Start Version
-                false, // NoConnection
-                null, // Profile
-                30, // Timeout
-                new String[0] // Tags
-            );
-
-            return Fake.FluentMigratorHelper.buildMigratorArgs(args, "test.dll");
-        }
-
-        private static string BuildMigratorArgsProvider(bool output)
-        {
-            var args = new Fake.FluentMigratorHelper.FluentMigratorParams
-                (
-                string.Empty, // Toolpath
-                Fake.FluentMigratorHelper.Provider.SqlServer2008, // Provider
-                "Testing", // Connection
-                @"C:\test.config", // Connection String Config Path
-                "test.namespace", // Namespace
-                true, // Nested
-                output, // Output
-                "test.sql", // OutputFileName
-                false, // Preview
-                1, // Steps
-                "migrate", // Task
-                0, // Version
-                -1, // Start Version
-                false, // NoConnection
-                null, // Profile
-                30, // Timeout
-                new String[0] // Tags
-            );
-
-            return Fake.FluentMigratorHelper.buildMigratorArgs(args, "test.dll");
-        }
-
-        private static string BuildMigratorArgsNoProvider()
-        {
-            var args = new Fake.FluentMigratorHelper.FluentMigratorParams
-                (
-                string.Empty, // Toolpath
-                Fake.FluentMigratorHelper.Provider.None, // Provider
-                null, // Connection
-                null, // Connection String Config Path
-                null, // Namespace
-                false, // Nested
-                false, // Output
-                null, // OutputFileName
-                false, // Preview
-                1, // Steps
-                "migrate", // Task
-                0, // Version
-                -1, // Start Version
-                false, // NoConnection
-                null, // Profile
-                30, // Timeout
-                new String[0] // Tags
-            );
-
-            return Fake.FluentMigratorHelper.buildMigratorArgs(args, "test.dll");
+            return FluentMigratorHelper.buildMigratorArgs(args, assembly);
         }
     }
 }

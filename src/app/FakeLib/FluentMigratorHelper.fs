@@ -88,7 +88,7 @@ let FluentMigratorDefaults =
 let buildMigratorArgs parameters assembly =
   let providerText = parameters.Provider.ToString()
   let tags = List.ofSeq parameters.Tags
-              |> List.map (fun t -> sprintf "--tag %s" t)
+              |> List.map (fun t -> sprintf "--tag=%s" t)
               |> String.concat " "
 
   new StringBuilder()
