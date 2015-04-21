@@ -118,10 +118,11 @@ let FluentMigrator setParams assemblies =
 
   let runMigrations assembly =
     let args = buildMigratorArgs parameters assembly
-    trace args
-    args
-
-  [for asm in List.ofSeq assemblies do
-    runMigrations asm]
+    0 = ExecProcess (fun info ->
+        info.FileName <- parameters.ToolPath
+        info.Arguments <- args) (TimeSpan.FromSeconds (float parameters.Timeout))
+        
+  let failedMigrations = [for asm in List.ofSeq assemblies do
+                            if runMigrations asm |> not then yield asm]
 
   traceEndTask "FluentMigrator" details
