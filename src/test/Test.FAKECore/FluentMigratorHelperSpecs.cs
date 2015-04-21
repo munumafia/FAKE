@@ -1,10 +1,22 @@
 ﻿using Fake;
 using Machine.Specifications;
+using MigrationTask = Fake.FluentMigratorHelper.MigrationTask;
+using Provider = Fake.FluentMigratorHelper.Provider;
 
 namespace Test.FAKECore
 {
     public class when_parsing_fluent_migrator_args
     {
+        It should_append_correct_task_argument = () =>
+        {
+            BuildMigratorArgs(task: MigrationTask.Migrate).ShouldContain("--task=migrate");
+            BuildMigratorArgs(task: MigrationTask.MigrateDown).ShouldContain("--task=migrate:down");
+            BuildMigratorArgs(task: MigrationTask.ListMigrations).ShouldContain("--task=listmigrations");
+            BuildMigratorArgs(task: MigrationTask.Rollback).ShouldContain("--task=rollback");
+            BuildMigratorArgs(task: MigrationTask.RollbackAll).ShouldContain("--task=rollback:all");
+            BuildMigratorArgs(task: MigrationTask.RollbackToVersion).ShouldContain("--task=rollback:toversion");
+        };
+
         It should_append_assembly = () =>
         {
             BuildMigratorArgs().ShouldContain("--assembly=test.dll");                
@@ -12,7 +24,7 @@ namespace Test.FAKECore
 
         It should_append_provider_when_specified = () =>
         {
-            BuildMigratorArgs(provider: FluentMigratorHelper.Provider.SqlServer2008).ShouldContain("--provider=SqlServer2008");
+            BuildMigratorArgs(provider: Provider.SqlServer2008).ShouldContain("--provider=SqlServer2008");
             BuildMigratorArgs().ShouldNotContain("--provider=");
         };
           
@@ -62,7 +74,7 @@ namespace Test.FAKECore
    
         It should_only_append_steps_when_task_is_rollback = () =>
         {
-            BuildMigratorArgs(task: "rollback").ShouldContain("--steps=1");
+            BuildMigratorArgs(task: MigrationTask.Rollback).ShouldContain("--steps=1");
             BuildMigratorArgs().ShouldNotContain("--steps=");                              
         };
 
@@ -115,7 +127,7 @@ namespace Test.FAKECore
 
         private static string BuildMigratorArgs(
             string assembly = "test.dll",
-            FluentMigratorHelper.Provider provider = FluentMigratorHelper.Provider.None,
+            Provider provider = Provider.None,
             string connection = null, 
             string connectionStringConfigPath = null, 
             string @namespace = null,
@@ -124,7 +136,7 @@ namespace Test.FAKECore
             string outputFileName = null, 
             bool preview = false, 
             int steps = 1, 
-            string task = "migrate", 
+            MigrationTask task = MigrationTask.Migrate, 
             int version = 0, 
             int startVersion = -1, 
             bool noConnection = false,
